@@ -1,0 +1,50 @@
+---
+title: "Práctica Inteligencia y Analítica de Negocios"
+author: "Gustavo Conde Alvarez"
+date: "mayo de 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(caret)
+
+```
+
+## Definición
+Se trata de realizar el ajuste de una regresión múltiple sobre el conjunto de datos **candy-data.csv**. La variable de salida es el campo *winpercent*, y como variables explicativas se utilizaran todas las demás.
+
+## Carga de datos
+```{r cars}
+candy.data <- read.csv("data/candy-data.csv", stringsAsFactors=TRUE)
+```
+
+## Tratamiento
+
+### Separación en train y test
+```{r}
+trainIndex <- createDataPartition(candy.data$winpercent, p = .75,
+list = FALSE,
+times = 1)
+
+candy.train=candy.data[trainIndex,]
+candy.test=candy.data[-trainIndex,]
+
+```
+
+### Modelo múltiple
+```{r}
+modelo = lm(winpercent ~ chocolate + fruity + peanutyalmondy + crispedricewafer + hard +  sugarpercent + pricepercent, data = candy.train)
+
+Yhat_train=predict(modelo,data.frame(candy.train[,-13]))
+Yreal_train=candy.train[,"winpercent"]
+error_train=sum(abs(Yhat_train-Yreal_train))/length(Yreal_train)
+
+Yhat_test=predict(modelo,data.frame(candy.test[,-13]))
+Yreal_test=candy.test[,"winpercent"]
+error_test=sum(abs(Yhat_test-Yreal_test))/length(Yreal_test)
+
+error_train
+error_test
+```
