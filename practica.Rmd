@@ -33,18 +33,37 @@ candy.test=candy.data[-trainIndex,]
 
 ```
 
-### Modelo múltiple
+### a) Modelo múltiple
 ```{r}
-modelo = lm(winpercent ~ chocolate + fruity + peanutyalmondy + crispedricewafer + hard +  sugarpercent + pricepercent, data = candy.train)
-
+modelo = lm(winpercent ~ chocolate + fruity + peanutyalmondy + caramel  + nougat + crispedricewafer + hard +  bar+ pluribus+ sugarpercent + pricepercent, data = candy.train)
+summary(modelo)
+modelo = lm(winpercent ~ chocolate + fruity + peanutyalmondy + crispedricewafer + sugarpercent, data = candy.train)
+summary(modelo)
 Yhat_train=predict(modelo,data.frame(candy.train[,-13]))
 Yreal_train=candy.train[,"winpercent"]
-error_train=sum(abs(Yhat_train-Yreal_train))/length(Yreal_train)
+ok_train=sum(Yhat_train-Yreal_train<1)/length(Yreal_train)
 
 Yhat_test=predict(modelo,data.frame(candy.test[,-13]))
 Yreal_test=candy.test[,"winpercent"]
-error_test=sum(abs(Yhat_test-Yreal_test))/length(Yreal_test)
+ok_test=sum(Yhat_test-Yreal_test<1)/length(Yreal_test)
 
-error_train
-error_test
+ok_train
+ok_test
+```
+
+```{r}
+library(corrplot)
+newdatacor = cor(candy.data[,-1])
+corrplot(newdatacor, method = "number")
+
+```
+
+### b) aplicamos bootstrap para calcular el intervalo de confianza de los estimadores
+
+```{r}
+library(boot)
+stat_fun <- function(x, idx) {median(x[idx])}
+boot_obj <- boot(candy.data$chocolate, R=1000, statistic = stat_fun)
+boot_obj
+
 ```
