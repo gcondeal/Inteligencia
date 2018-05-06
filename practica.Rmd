@@ -9,7 +9,8 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 
 library(caret)
-
+library(corrplot)
+library(boot)
 ```
 
 ## Definición
@@ -35,9 +36,9 @@ candy.test=candy.data[-trainIndex,]
 
 ### a) Modelo múltiple
 ```{r}
-modelo = lm(winpercent ~ chocolate + fruity + peanutyalmondy + caramel  + nougat + crispedricewafer + hard +  bar+ pluribus+ sugarpercent + pricepercent, data = candy.train)
+modelo = glm(winpercent ~ chocolate + fruity + peanutyalmondy + caramel  + nougat + crispedricewafer + hard +  bar+ pluribus+ sugarpercent + pricepercent, data = candy.train)
 summary(modelo)
-modelo = lm(winpercent ~ chocolate + fruity + peanutyalmondy + crispedricewafer + sugarpercent, data = candy.train)
+modelo = glm(winpercent ~ chocolate + fruity + peanutyalmondy + sugarpercent, data = candy.train)
 summary(modelo)
 Yhat_train=predict(modelo,data.frame(candy.train[,-13]))
 Yreal_train=candy.train[,"winpercent"]
@@ -51,19 +52,41 @@ ok_train
 ok_test
 ```
 
+tras dejar las variables significativas en el modelo vemos que el AIC disminuye ligeramente, aunque el indice de acierto, ajustando con un margen de 1, es relativamente bajo, tanto en train como en test.
+
+
 ```{r}
-library(corrplot)
+
 newdatacor = cor(candy.data[,-1])
 corrplot(newdatacor, method = "number")
 
 ```
 
+La representación de la correlación de las varibles muestra que no existe correlación entre ninguna de las variables.
+
+
 ### b) aplicamos bootstrap para calcular el intervalo de confianza de los estimadores
 
 ```{r}
-library(boot)
-stat_fun <- function(x, idx) {median(x[idx])}
-boot_obj <- boot(candy.data$chocolate, R=1000, statistic = stat_fun)
-boot_obj
+
+
+boot.fn=function(data,index)
+  coefficients(glm(winpercent ~ chocolate + fruity + peanutyalmondy + sugarpercent, data =    data, subset=index))
+set.seed(1)
+boot(candy.data,boot.fn,1000)
 
 ```
+
+### c) realizamos la validación k-fold
+
+```{r}
+cv.error.5=rep(0,5)
+for (i in 1:5)
+{
+  modelo.fit=glm(winpercent~chocolate + fruity + peanutyalmondy + sugarpercent,data=candy.train)
+  cv.error.5[i]=cv.glm(candy.train,modelo.fit,K=5)$delta[1]
+}
+cv.error.5
+```
+
+
